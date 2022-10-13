@@ -1,0 +1,21 @@
+
+#Solucion a las relaciones entre colecciones
+
+# relacion entre categorias y usuario teniendo en cuenta el tipo de usuario
+
+const categorias = db.servicio.find({}, {roll:1}).toArray()
+const usuarios = db.usuario.find({}).toArray()
+let random
+for(let index=0; index<usuarios.length; index++)
+{
+	if(usuarios[index].tipo_usuario == 1)
+	{
+		random = Math.floor(Math.random() * 12)
+		db.usuario.updateOne({_id: usuarios[index]._id }, { $set: { servicio: categorias[random]._id } })
+	}
+	else
+	{
+		random = Math.floor(Math.random() * 12)
+		db.usuario.updateOne({_id: usuarios[index]._id }, { $set: { servicio: "" } })
+	}
+}
