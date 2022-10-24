@@ -1,14 +1,15 @@
-var cantidad_usuarios = 100000
-var cantidad_direcciones = 100000
+var cantidad_usuarios = 500
+var cantidad_direcciones = 500
 var cantidad_servicios = 60
 var cantidad_categorias = 10
 var cantidad_resenas = 10000
 
 function main(nombre)
 {
+	let init = Date.now()
 	console.clear()
 	use(nombre)
-	console.log("-> Base de datos "+nombre+" creada!")
+	console.log("-> Base de datos \""+nombre+"\" creada!")
 	const colecciones = ["usuarios", "direcciones", "servicios", "categorias", "resenas"]
 	colecciones.map((coleccion) =>
 	{
@@ -17,8 +18,8 @@ function main(nombre)
 		agregar_documentos(coleccion)
 	})
 	console.log("-> Creando relaciones...")
-	//generar_relaciones()
-	console.log("-> Finalizado!")
+	generar_relaciones()
+	console.log("-> Finalizado! tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 }
 
 function agregar_documentos(coleccion)
@@ -32,7 +33,6 @@ function agregar_documentos(coleccion)
 			{
 				let tipo = Math.floor(Math.random()*2)
 				objeto = new Object()
-				objeto.id = index
 				objeto.nombre = "nombre_"+index
 				objeto.apellido = "apellido_"+index
 				objeto.edad = Math.floor(Math.random()*(80-16)+16)
@@ -42,8 +42,10 @@ function agregar_documentos(coleccion)
 				objeto.direccion = ""
 				objeto.dni = Math.floor(Math.random()*(99999999-10000000)+10000000)
 				objeto.fecha_nacimiento = ('0'+Math.floor(Math.random()*(30-1)+1)).slice(-2)+"-"+('0'+Math.floor(Math.random()*(12-1)+1)).slice(-2)+"-"+Math.floor(Math.random()*(2005-1950)+1950)
-				objeto.telefono_1 = Math.floor(Math.random()*(4999999-4000000)+4000000)
-				objeto.telefono_2 = Math.floor(Math.random()*(2709999999-2500000000)+2500000000)
+				let telefonoJson = new Object()
+				telefonoJson.casa = Math.floor(Math.random()*(4999999-4000000)+4000000)
+				telefonoJson.celular = Math.floor(Math.random()*(2709999999-2500000000)+2500000000)
+				objeto.telefono = telefonoJson
 				objeto.historial = ""
 				data.push(objeto)
 			}
@@ -53,7 +55,6 @@ function agregar_documentos(coleccion)
 			for(let index=0;index<cantidad_direcciones;index++)
 			{
 				objeto = new Object()
-				objeto.id = index
 				objeto.calle = "calle_"+index
 				objeto.numero = Math.floor(Math.random()*(9000-100)+100)
 				objeto.codigo_postal = Math.floor(Math.random()*(6000-5000)+5000)
@@ -104,24 +105,16 @@ function agregar_documentos(coleccion)
 
 function generar_relaciones()
 {
-	let random
-	init = Date.now()
-	for(let index=0; index<cantidad_usuarios; index++)
+	// Relaciona usuarios con direcciones
+	let init = Date.now()
+	usuarios = db.usuarios.find()
+	direcciones = db.direcciones.find()
+	while (usuarios.hasNext())
 	{
-		db.usuarios.updateOne({id : index }, { $set: { direccion: db.direcciones.findOne({id : index }, {roll:1})._id } })
+		db.usuarios.updateOne({_id:usuarios.next()._id}, {$set:{direccion:direcciones.next()._id}})
 	}
-	time = Date.now() - init
-	console.log("# Relaciones Usuario - Direccion asignadas! tiempo: "+time/1000+" segundos")
-
-	// Relacion entre Usuarios y Servicios
-	const servicios = db.servicios.find({}, {roll:1}).toArray()
-	for(let index=0; index<usuarios.length; index++)
-	{
-		if(usuarios[index].tipo_usuario == 1)
-		{
-			random = Math.floor(Math.random()*60)
-			db.usuarios.updateOne({_id: usuarios[index]._id }, { $set: { servicio: servicios[random]._id } })
-		}
-	}
-	console.log("# Relaciones Usuario - Servicio asignadas!")
+	console.log("# Relaciones Usuario - Direccion asignadas!")
+	console.log("Relacion tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 }
+
+main("ServiciosYa")
