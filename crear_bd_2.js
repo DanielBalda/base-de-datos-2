@@ -2,7 +2,7 @@ var cantidad_usuarios = 1000000
 var cantidad_direcciones = 1000000
 var cantidad_servicios = 60
 var cantidad_categorias = 10
-var cantidad_resenas = 20000000
+var cantidad_resenas = 2000000
 
 function main(nombre)
 {
