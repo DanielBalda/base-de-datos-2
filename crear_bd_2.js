@@ -1,10 +1,10 @@
 // variables globales para la cantidad de documentos a crear
-var cantidad_usuarios = 1000
-var cantidad_direcciones = 1000
+var cantidad_usuarios = 100000
+var cantidad_direcciones = 100000
 var cantidad_servicios = 60
 var cantidad_categorias = 10
-var cantidad_resenas = 10000
-main("test") // recibe el nombre de la base de datos como parametro, si queda en blanco se crea con el nombre "ServiciosYa"
+var cantidad_resenas = 200000
+main() // recibe el nombre de la base de datos como parametro, si queda en blanco se crea con el nombre "ServiciosYa"
 
 function main(nombre = "ServiciosYa")
 {
@@ -170,4 +170,3 @@ function generar_relaciones()
 	console.log("# Relaciones Resena - Usuario asignadas!")
 	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 }
-
