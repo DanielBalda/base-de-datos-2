@@ -1,21 +1,23 @@
-var cantidad_usuarios = 1000000
-var cantidad_direcciones = 1000000
+// variables globales para la cantidad de documentos a crear
+var cantidad_usuarios = 1000
+var cantidad_direcciones = 1000
 var cantidad_servicios = 60
 var cantidad_categorias = 10
-var cantidad_resenas = 2000000
+var cantidad_resenas = 10000
+main("test") // recibe el nombre de la base de datos como parametro, si queda en blanco se crea con el nombre "ServiciosYa"
 
-function main(nombre)
+function main(nombre = "ServiciosYa")
 {
 	let init = Date.now()
 	console.clear()
-	use(nombre)
+	use(nombre) // crea la base de datos
 	console.log("-> Base de datos \""+nombre+"\" creada!")
-	const colecciones = ["usuarios", "direcciones", "servicios", "categorias", "resenas", "publicaciones"]
+	const colecciones = ["usuarios", "direcciones", "servicios", "categorias", "publicaciones", "resenas"]
 	colecciones.map((coleccion) =>
 	{
-		db.createCollection(coleccion)
+		db.createCollection(coleccion) // crea las colecciones
 		console.log("-> Coleccion "+coleccion+" creada!")
-		agregar_documentos(coleccion)
+		agregar_documentos(coleccion) // agrega los documentos pasado por parametro a la coleccion
 	})
 	console.log("-> Creando relaciones...")
 	generar_relaciones()
@@ -125,8 +127,7 @@ function generar_relaciones()
 	{
 		db.usuarios.updateOne({_id:usuarios.next()._id}, {$set:{direccion:direcciones.next()._id}})
 	}
-	console.log("# Relaciones Usuario - Direccion asignadas!")
-	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
+	console.log("# Relaciones Usuario - Direccion asignadas! Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 
 	// Relaciona usuarios tipo 1 con servicios
 	init = Date.now()
@@ -136,8 +137,7 @@ function generar_relaciones()
 	{
 		db.usuarios.updateOne({_id:usuarios.next()._id}, {$set:{publicacion:publicaciones.next()._id}})
 	}
-	console.log("# Relaciones Usuario - Publicacion asignadas!")
-	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
+	console.log("# Relaciones Usuario - Publicacion asignadas! Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 
 	// Relaciona Servicio con Categoria
 	init = Date.now()
@@ -147,9 +147,15 @@ function generar_relaciones()
 		categorias = db.categorias.aggregate({ $sample: { size: 1 } }).next()._id
 		db.servicios.updateOne({_id:servicios.next()._id}, {$set:{categoria:categorias}})
 	}
-	console.log("# Relaciones Servicio - Categoria asignadas!")
-	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
+	console.log("# Relaciones Servicio - Categoria asignadas! Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 
+	// Relaciona Publicacion con Servicio
+	init = Date.now()
+	publicaciones = db.publicaciones.find({})
+	while (publicaciones.hasNext())
+	{
+		servicios = db.servicios.aggregate({ $sample: { size: 1 } }).next()._id
+		db.publicaciones.updateOne({_id:publicaciones.next()._id}, {$set:{servicio:servicios}})
+	}
+	console.log("# Relaciones Publicacion - Servicio asignadas! Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 }
-
-main("ServiciosYa")
