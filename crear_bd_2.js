@@ -144,8 +144,8 @@ function generar_relaciones()
 	servicios = db.servicios.find({})
 	while (servicios.hasNext())
 	{
-		categorias = db.categorias.aggregate({ $sample: { size: 1 } }).toArray()
-		db.servicios.updateOne({_id:servicios.next()._id}, {$set:{categoria:categorias[0]._id}})
+		categorias = db.categorias.aggregate({ $sample: { size: 1 } }).next()._id
+		db.servicios.updateOne({_id:servicios.next()._id}, {$set:{categoria:categorias}})
 	}
 	console.log("# Relaciones Servicio - Categoria asignadas!")
 	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
