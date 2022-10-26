@@ -1,8 +1,8 @@
-var cantidad_usuarios = 20000
-var cantidad_direcciones = 20000
+var cantidad_usuarios = 1000000
+var cantidad_direcciones = 1000000
 var cantidad_servicios = 60
 var cantidad_categorias = 10
-var cantidad_resenas = 10000
+var cantidad_resenas = 20000000
 
 function main(nombre)
 {
@@ -138,6 +138,18 @@ function generar_relaciones()
 	}
 	console.log("# Relaciones Usuario - Publicacion asignadas!")
 	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
+
+	// Relaciona Servicio con Categoria
+	init = Date.now()
+	servicios = db.servicios.find({})
+	while (servicios.hasNext())
+	{
+		categorias = db.categorias.aggregate({ $sample: { size: 1 } }).toArray()
+		db.servicios.updateOne({_id:servicios.next()._id}, {$set:{categoria:categorias[0]._id}})
+	}
+	console.log("# Relaciones Servicio - Categoria asignadas!")
+	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
+
 }
 
 main("ServiciosYa")
