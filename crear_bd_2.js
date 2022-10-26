@@ -129,7 +129,7 @@ function generar_relaciones()
 	}
 	console.log("# Relaciones Usuario - Direccion asignadas! Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 
-	// Relaciona usuarios tipo 1 con servicios
+	// Relaciona usuarios tipo 1 con publicacion 
 	init = Date.now()
 	usuarios = db.usuarios.find({tipo_usuario:1})
 	publicaciones = db.publicaciones.find()
@@ -170,3 +170,4 @@ function generar_relaciones()
 	console.log("# Relaciones Resena - Usuario asignadas!")
 	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 }
+
