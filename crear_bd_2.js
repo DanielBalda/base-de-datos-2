@@ -1,8 +1,7 @@
-var cantidad_usuarios = 50000
-var cantidad_direcciones = 50000
+var cantidad_usuarios = 20000
+var cantidad_direcciones = 20000
 var cantidad_servicios = 60
 var cantidad_categorias = 10
-var cantidad_publicaciones = 50000
 var cantidad_resenas = 10000
 
 function main(nombre)
@@ -137,7 +136,7 @@ function generar_relaciones()
 	{
 		db.usuarios.updateOne({_id:usuarios.next()._id}, {$set:{publicacion:publicaciones.next()._id}})
 	}
-	console.log("# Relaciones Usuario - Servicio asignadas!")
+	console.log("# Relaciones Usuario - Publicacion asignadas!")
 	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 }
 
