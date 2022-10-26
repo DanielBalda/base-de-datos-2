@@ -1,7 +1,8 @@
-var cantidad_usuarios = 500
-var cantidad_direcciones = 500
+var cantidad_usuarios = 50000
+var cantidad_direcciones = 50000
 var cantidad_servicios = 60
 var cantidad_categorias = 10
+var cantidad_publicaciones = 50000
 var cantidad_resenas = 10000
 
 function main(nombre)
@@ -10,7 +11,7 @@ function main(nombre)
 	console.clear()
 	use(nombre)
 	console.log("-> Base de datos \""+nombre+"\" creada!")
-	const colecciones = ["usuarios", "direcciones", "servicios", "categorias", "resenas"]
+	const colecciones = ["usuarios", "direcciones", "servicios", "categorias", "resenas", "publicaciones"]
 	colecciones.map((coleccion) =>
 	{
 		db.createCollection(coleccion)
@@ -19,7 +20,7 @@ function main(nombre)
 	})
 	console.log("-> Creando relaciones...")
 	generar_relaciones()
-	console.log("-> Finalizado! tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
+	console.log("-> Finalizado! tiempo total: "+Math.floor((Date.now() - init)/1000)+" segundos")
 }
 
 function agregar_documentos(coleccion)
@@ -38,15 +39,15 @@ function agregar_documentos(coleccion)
 				objeto.edad = Math.floor(Math.random()*(80-16)+16)
 				objeto.avatar = "imagen/"+index
 				objeto.tipo_usuario = tipo
-				objeto.servicio = ""
-				objeto.direccion = ""
+				objeto.publicacion = "" // ObjetoId de publicacion
+				objeto.direccion = ""  // ObjetoId de direccion
 				objeto.dni = Math.floor(Math.random()*(99999999-10000000)+10000000)
 				objeto.fecha_nacimiento = ('0'+Math.floor(Math.random()*(30-1)+1)).slice(-2)+"-"+('0'+Math.floor(Math.random()*(12-1)+1)).slice(-2)+"-"+Math.floor(Math.random()*(2005-1950)+1950)
 				let telefonoJson = new Object()
 				telefonoJson.casa = Math.floor(Math.random()*(4999999-4000000)+4000000)
 				telefonoJson.celular = Math.floor(Math.random()*(2709999999-2500000000)+2500000000)
 				objeto.telefono = telefonoJson
-				objeto.historial = ""
+				objeto.historial = "" // ObjetoId de historial
 				data.push(objeto)
 			}
 		break
@@ -71,10 +72,7 @@ function agregar_documentos(coleccion)
 			{
 				objeto = new Object()
 				objeto.tipo = "servicio_"+index
-				objeto.descripcion = "servicio_"+index
-				objeto.visita_precio = Math.floor(Math.random()*(1000-200)+200)
-				objeto.categoria = ""
-				objeto.reseña = ""
+				objeto.categoria = "" // ObjectId de categoria
 				data.push(objeto)
 			}
 		break
@@ -88,6 +86,20 @@ function agregar_documentos(coleccion)
 			}
 		break
 
+		case "publicaciones":
+			usuarios_tipo_1 = db.usuarios.find({tipo_usuario:1}).count()
+			for(let index=0;index<usuarios_tipo_1;index++)
+			{
+				objeto = new Object()
+				objeto.descripcion = "Descripcion sobre el servicio brindado por el usuario, con detalles puntuales."
+				objeto.fecha_publicacion = ('0'+Math.floor(Math.random()*(30-1)+1)).slice(-2)+"-"+('0'+Math.floor(Math.random()*(12-1)+1)).slice(-2)+"-"+Math.floor(Math.random()*(2022-2018)+2018)
+				objeto.costo_visita = Math.floor(Math.random()*(1000-200)+200)
+				objeto.resena = "" // ObjectId de reseña
+				objeto.servicio = "" // ObjectId de servicio
+				data.push(objeto)
+			}
+		break
+
 		case "resenas":
 			for(let index=0;index<cantidad_resenas;index++)
 			{
@@ -95,6 +107,7 @@ function agregar_documentos(coleccion)
 				objeto.valoracion = Math.floor(Math.random()*(5-1)+1)
 				objeto.comentario = "Esto es un comentario de prueba... Muy buena atencion, todo ok. Cobro lo que corresponde"
 				objeto.fecha = ('0'+Math.floor(Math.random()*(30-1)+1)).slice(-2)+"-"+('0'+Math.floor(Math.random()*(12-1)+1)).slice(-2)+"-"+Math.floor(Math.random()*(2022-2018)+2018)
+				objeto.cliente = "" // ObjectId de usuario (tipo_usuario = 0)
 				data.push(objeto)
 			}
 		break
@@ -114,7 +127,18 @@ function generar_relaciones()
 		db.usuarios.updateOne({_id:usuarios.next()._id}, {$set:{direccion:direcciones.next()._id}})
 	}
 	console.log("# Relaciones Usuario - Direccion asignadas!")
-	console.log("Relacion tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
+	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
+
+	// Relaciona usuarios tipo 1 con servicios
+	init = Date.now()
+	usuarios = db.usuarios.find({tipo_usuario:1})
+	publicaciones = db.publicaciones.find()
+	while (usuarios.hasNext())
+	{
+		db.usuarios.updateOne({_id:usuarios.next()._id}, {$set:{publicacion:publicaciones.next()._id}})
+	}
+	console.log("# Relaciones Usuario - Servicio asignadas!")
+	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 }
 
 main("ServiciosYa")
