@@ -158,4 +158,15 @@ function generar_relaciones()
 		db.publicaciones.updateOne({_id:publicaciones.next()._id}, {$set:{servicio:servicios}})
 	}
 	console.log("# Relaciones Publicacion - Servicio asignadas! Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
+
+	// Relaciona resenas con usuarios tipo 0 
+	init = Date.now()	
+	resenas = db.resenas.find()
+	while (resenas.hasNext())
+	{
+		usuarios = db.usuarios.aggregate([{$match:{tipo_usuario:0}},{$sample:{size:1}}]).next()._id
+		db.resenas.updateOne({_id:resenas.next()._id}, {$set:{cliente:usuarios}})
+	}
+	console.log("# Relaciones Resena - Usuario asignadas!")
+	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 }
