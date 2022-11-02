@@ -4,6 +4,7 @@ var cantidad_direcciones = 100000
 var cantidad_servicios = 60
 var cantidad_categorias = 10
 var cantidad_resenas = 200000
+var cantidad_historial = 400000
 main() // recibe el nombre de la base de datos como parametro, si queda en blanco se crea con el nombre "ServiciosYa"
 
 function main(nombre = "ServiciosYa")
@@ -12,7 +13,7 @@ function main(nombre = "ServiciosYa")
 	console.clear()
 	use(nombre) // crea la base de datos
 	console.log("-> Base de datos \""+nombre+"\" creada!")
-	const colecciones = ["usuarios", "direcciones", "servicios", "categorias", "publicaciones", "resenas"]
+	const colecciones = ["usuarios", "direcciones", "servicios", "categorias", "publicaciones", "resenas", "historial"]
 	colecciones.map((coleccion) =>
 	{
 		db.createCollection(coleccion) // crea las colecciones
@@ -37,10 +38,35 @@ function agregar_documentos(coleccion)
 				objeto = new Object()
 				objeto.nombre = "nombre_"+index
 				objeto.apellido = "apellido_"+index
+				objeto.email = "usuario_"+index+"@mail.com" // se usa para el login
+				objeto.contrasena = "ab58s1968w1fas81gw"+index
 				objeto.edad = Math.floor(Math.random()*(80-16)+16)
 				objeto.avatar = "imagen/"+index
 				objeto.tipo_usuario = tipo
 				objeto.publicacion = "" // ObjetoId de publicacion
+				// direcciones = []
+				// for(let dir=0;dir<3;dir++)
+				// {
+				// 	let direccionJson = new Object()
+				// 	direccionJson.calle = "calle_"+index
+				// 	direccionJson.numero = Math.floor(Math.random()*(9000-100)+100)
+				// 	direccionJson.codigo_postal = Math.floor(Math.random()*(6000-5000)+5000)
+				// 	direccionJson.localidad = "localidad_"+Math.floor(Math.random()*(100-0)+0)
+				// 	if(dir > 1)
+				// 	{
+				// 		direccionJson.edificio = Math.floor(Math.random()*(4-1)+1)
+				// 		direccionJson.piso = Math.floor(Math.random()*(60-0)+0)
+				// 		direccionJson.departamento = Math.floor(Math.random()*(8-1)+1)
+				// 	}
+				// 	else
+				// 	{
+				// 		direccionJson.edificio = ""
+				// 		direccionJson.piso = ""
+				// 		direccionJson.departamento = ""
+				// 	}
+				// 	direcciones.push(direccionJson)
+				// }
+				// objeto.direccion = direcciones
 				objeto.direccion = ""  // ObjetoId de direccion
 				objeto.dni = Math.floor(Math.random()*(99999999-10000000)+10000000)
 				objeto.fecha_nacimiento = ('0'+Math.floor(Math.random()*(30-1)+1)).slice(-2)+"-"+('0'+Math.floor(Math.random()*(12-1)+1)).slice(-2)+"-"+Math.floor(Math.random()*(2005-1950)+1950)
@@ -112,6 +138,19 @@ function agregar_documentos(coleccion)
 				data.push(objeto)
 			}
 		break
+
+		case "historial":
+			for(let index=0;index<cantidad_historial;index++)
+			{
+				objeto = new Object()
+				objeto.estado = Math.floor(Math.random()*(3-0)+0) // 0 - Cancelado, 1 - En proceso, 2 - Completado
+				objeto.cliente = "" // ObjectId de usuario (tipo_usuario = 0)
+				objeto.publicacion = "" // ObjectId de publicacion
+				objeto.fecha = ('0'+Math.floor(Math.random()*(30-1)+1)).slice(-2)+"-"+('0'+Math.floor(Math.random()*(12-1)+1)).slice(-2)+"-"+Math.floor(Math.random()*(2022-2018)+2018)
+				objeto.costo_total = Math.floor(Math.random()*(30000-8000)+8000)
+				data.push(objeto)
+			}
+		break
 	}
 	db[coleccion].insertMany(data)
 	console.log("# Documentos agregados a la coleccion "+coleccion)
@@ -142,30 +181,42 @@ function generar_relaciones()
 	// Relaciona Servicio con Categoria
 	init = Date.now()
 	servicios = db.servicios.find({})
+	categorias = db.categorias.aggregate({ $sample: { size: db.categorias.countDocuments() } })
 	while (servicios.hasNext())
 	{
-		categorias = db.categorias.aggregate({ $sample: { size: 1 } }).next()._id
-		db.servicios.updateOne({_id:servicios.next()._id}, {$set:{categoria:categorias}})
+		if(!categorias.hasNext())
+		{
+			categorias = db.categorias.aggregate({ $sample: { size: db.categorias.countDocuments() } })
+		}
+		db.servicios.updateOne({_id:servicios.next()._id}, {$set:{categoria:categorias.next()._id}})
 	}
 	console.log("# Relaciones Servicio - Categoria asignadas! Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 
 	// Relaciona Publicacion con Servicio
 	init = Date.now()
 	publicaciones = db.publicaciones.find({})
+	servicios = db.servicios.aggregate({ $sample: { size: db.servicios.countDocuments() } })
 	while (publicaciones.hasNext())
 	{
-		servicios = db.servicios.aggregate({ $sample: { size: 1 } }).next()._id
-		db.publicaciones.updateOne({_id:publicaciones.next()._id}, {$set:{servicio:servicios}})
+		if(!servicios.hasNext())
+		{
+			servicios = db.servicios.aggregate({ $sample: { size: db.servicios.countDocuments() } })
+		}
+		db.publicaciones.updateOne({_id:publicaciones.next()._id}, {$set:{servicio:servicios.next()._id}})
 	}
 	console.log("# Relaciones Publicacion - Servicio asignadas! Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 
 	// Relaciona resenas con usuarios tipo 0 
 	init = Date.now()	
 	resenas = db.resenas.find()
+	usuarios = db.usuarios.aggregate([{$match:{tipo_usuario:0}},{$sample:{size:db.usuarios.countDocuments()}}])
 	while (resenas.hasNext())
 	{
-		usuarios = db.usuarios.aggregate([{$match:{tipo_usuario:0}},{$sample:{size:1}}]).next()._id
-		db.resenas.updateOne({_id:resenas.next()._id}, {$set:{cliente:usuarios}})
+		if(!usuarios.hasNext())
+		{
+			usuarios = db.usuarios.aggregate([{$match:{tipo_usuario:0}},{$sample:{size:db.usuarios.countDocuments()}}])
+		}
+		db.resenas.updateOne({_id:resenas.next()._id}, {$set:{cliente:usuarios.next()._id}})
 	}
 	console.log("# Relaciones Resena - Usuario asignadas!")
 	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
