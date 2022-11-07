@@ -1,10 +1,9 @@
 // variables globales para la cantidad de documentos a crear
-var cantidad_usuarios = 100000
-var cantidad_direcciones = 100000
+var cantidad_usuarios = 1000
 var cantidad_servicios = 60
 var cantidad_categorias = 10
-var cantidad_resenas = 200000
-var cantidad_historial = 400000
+var cantidad_resenas = 1000
+var cantidad_historial = 1000
 main() // recibe el nombre de la base de datos como parametro, si queda en blanco se crea con el nombre "ServiciosYa"
 
 function main(nombre = "ServiciosYa")
@@ -13,7 +12,7 @@ function main(nombre = "ServiciosYa")
 	console.clear()
 	use(nombre) // crea la base de datos
 	console.log("-> Base de datos \""+nombre+"\" creada!")
-	const colecciones = ["usuarios", "direcciones", "servicios", "categorias", "publicaciones", "resenas", "historial"]
+	const colecciones = ["usuarios", "servicios", "categorias", "publicaciones", "resenas", "historial"]
 	colecciones.map((coleccion) =>
 	{
 		db.createCollection(coleccion) // crea las colecciones
@@ -29,67 +28,53 @@ function agregar_documentos(coleccion)
 {
 	let data = []
 	let objeto
+	let indices = []
 	switch(coleccion)
 	{
 		case "usuarios":
+			indices = [{email:1},{dni:1}]
 			for(let index=0;index<cantidad_usuarios;index++)
 			{
 				let tipo = Math.floor(Math.random()*2)
 				objeto = new Object()
 				objeto.nombre = "nombre_"+index
 				objeto.apellido = "apellido_"+index
-				objeto.email = "usuario_"+index+"@mail.com" // se usa para el login
+				objeto.email = "usuario_"+index+"@email.com" // se usa para el login
 				objeto.contrasena = "ab58s1968w1fas81gw"+index
-				objeto.edad = Math.floor(Math.random()*(80-16)+16)
 				objeto.avatar = "imagen/"+index
 				objeto.tipo_usuario = tipo
 				objeto.publicacion = "" // ObjetoId de publicacion
-				// direcciones = []
-				// for(let dir=0;dir<3;dir++)
-				// {
-				// 	let direccionJson = new Object()
-				// 	direccionJson.calle = "calle_"+index
-				// 	direccionJson.numero = Math.floor(Math.random()*(9000-100)+100)
-				// 	direccionJson.codigo_postal = Math.floor(Math.random()*(6000-5000)+5000)
-				// 	direccionJson.localidad = "localidad_"+Math.floor(Math.random()*(100-0)+0)
-				// 	if(dir > 1)
-				// 	{
-				// 		direccionJson.edificio = Math.floor(Math.random()*(4-1)+1)
-				// 		direccionJson.piso = Math.floor(Math.random()*(60-0)+0)
-				// 		direccionJson.departamento = Math.floor(Math.random()*(8-1)+1)
-				// 	}
-				// 	else
-				// 	{
-				// 		direccionJson.edificio = ""
-				// 		direccionJson.piso = ""
-				// 		direccionJson.departamento = ""
-				// 	}
-				// 	direcciones.push(direccionJson)
-				// }
-				// objeto.direccion = direcciones
-				objeto.direccion = ""  // ObjetoId de direccion
+				direcciones = []
+				for(let dir=0;dir<3;dir++)
+				{
+					let direccionJson = new Object()
+					direccionJson.calle = "calle_"+index
+					direccionJson.numero = Math.floor(Math.random()*(9000-100)+100)
+					direccionJson.codigo_postal = Math.floor(Math.random()*(6000-5000)+5000)
+					direccionJson.localidad = "localidad_"+Math.floor(Math.random()*(100-0)+0)
+					if(dir > 1)
+					{
+						direccionJson.edificio = Math.floor(Math.random()*(4-1)+1)
+						direccionJson.piso = Math.floor(Math.random()*(60-0)+0)
+						direccionJson.departamento = Math.floor(Math.random()*(8-1)+1)
+					}
+					else
+					{
+						direccionJson.edificio = ""
+						direccionJson.piso = ""
+						direccionJson.departamento = ""
+					}
+					direcciones.push(direccionJson)
+				}
+				objeto.direccion = direcciones
 				objeto.dni = Math.floor(Math.random()*(99999999-10000000)+10000000)
 				objeto.fecha_nacimiento = ('0'+Math.floor(Math.random()*(30-1)+1)).slice(-2)+"-"+('0'+Math.floor(Math.random()*(12-1)+1)).slice(-2)+"-"+Math.floor(Math.random()*(2005-1950)+1950)
 				let telefonoJson = new Object()
 				telefonoJson.casa = Math.floor(Math.random()*(4999999-4000000)+4000000)
-				telefonoJson.celular = Math.floor(Math.random()*(2709999999-2500000000)+2500000000)
+				telefonoJson.celular_1 = Math.floor(Math.random()*(2709999999-2500000000)+2500000000)
+				telefonoJson.celular_2 = Math.floor(Math.random()*(2709999999-2500000000)+2500000000)
 				objeto.telefono = telefonoJson
 				objeto.historial = "" // ObjetoId de historial
-				data.push(objeto)
-			}
-		break
-		
-		case "direcciones":
-			for(let index=0;index<cantidad_direcciones;index++)
-			{
-				objeto = new Object()
-				objeto.calle = "calle_"+index
-				objeto.numero = Math.floor(Math.random()*(9000-100)+100)
-				objeto.codigo_postal = Math.floor(Math.random()*(6000-5000)+5000)
-				objeto.localidad = "localidad_"+Math.floor(Math.random()*(100-0)+0)
-				objeto.edificio = Math.floor(Math.random()*(4-1)+1)
-				objeto.piso = Math.floor(Math.random()*(60-0)+0)
-				objeto.departamento = Math.floor(Math.random()*(8-1)+1)
 				data.push(objeto)
 			}
 		break
@@ -153,20 +138,17 @@ function agregar_documentos(coleccion)
 		break
 	}
 	db[coleccion].insertMany(data)
+	if(indices.length > 0)
+	{
+		indices.map((indice)=>{
+			db[coleccion].createIndex(indice, {"unique":true})
+		})
+	}
 	console.log("# Documentos agregados a la coleccion "+coleccion)
 }
 
 function generar_relaciones()
 {
-	// Relaciona usuarios con direcciones
-	let init = Date.now()
-	usuarios = db.usuarios.find()
-	direcciones = db.direcciones.find()
-	while (usuarios.hasNext())
-	{
-		db.usuarios.updateOne({_id:usuarios.next()._id}, {$set:{direccion:direcciones.next()._id}})
-	}
-	console.log("# Relaciones Usuario - Direccion asignadas! Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 
 	// Relaciona usuarios tipo 1 con publicacion 
 	init = Date.now()
@@ -207,7 +189,7 @@ function generar_relaciones()
 	console.log("# Relaciones Publicacion - Servicio asignadas! Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 
 	// Relaciona resenas con usuarios tipo 0 
-	init = Date.now()	
+	init = Date.now()
 	resenas = db.resenas.find()
 	usuarios = db.usuarios.aggregate([{$match:{tipo_usuario:0}},{$sample:{size:db.usuarios.countDocuments()}}])
 	while (resenas.hasNext())
@@ -221,3 +203,5 @@ function generar_relaciones()
 	console.log("# Relaciones Resena - Usuario asignadas!")
 	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 }
+
+//db.dropDatabase()
