@@ -12,7 +12,7 @@ function main(nombre = "ServiciosYa")
 	console.clear()
 	use(nombre) // crea la base de datos
 	console.log("-> Base de datos \""+nombre+"\" creada!")
-	const colecciones = ["usuarios", "servicios", "categorias", "publicaciones", "resenas", "historial"]
+	const colecciones = ["usuarios", "categorias", "publicaciones", "resenas", "historial"]
 	colecciones.map((coleccion) =>
 	{
 		db.createCollection(coleccion) // crea las colecciones
@@ -44,7 +44,6 @@ function agregar_documentos(coleccion)
 				objeto.avatar = "imagen/"+index
 				objeto.tipo_usuario = tipo
 				objeto.publicacion = "" // ObjetoId de publicacion
-				objeto.countServicios = 0
 				direcciones = []
 				for(let dir=0;dir<3;dir++)
 				{
@@ -80,21 +79,18 @@ function agregar_documentos(coleccion)
 			}
 		break
 		
-		case "servicios":
-			for(let index=0;index<cantidad_servicios;index++)
-			{
-				objeto = new Object()
-				objeto.tipo = "servicio_"+index
-				objeto.categoria = "" // ObjectId de categoria
-				data.push(objeto)
-			}
-		break
-		
 		case "categorias":
 			for(let index=0;index<cantidad_categorias;index++)
 			{
 				objeto = new Object()
 				objeto.tipo = "categoria_"+index
+				let servicio = []
+				let random = Math.floor(Math.random()*(12-5)+5)
+				for(let index=0;index<random;index++)
+				{
+					servicio.push("servicio_"+index)
+				}
+				objeto.servicios = servicio
 				data.push(objeto)
 			}
 		break
@@ -130,7 +126,6 @@ function agregar_documentos(coleccion)
 			{
 				objeto = new Object()
 				objeto.estado = Math.floor(Math.random()*(3-0)+0) // 0 - Cancelado, 1 - En proceso, 2 - Completado
-				objeto.oferente = "" // ObjectId de usuario (tipo_usuario = 1)
 				objeto.cliente = "" // ObjectId de usuario (tipo_usuario = 0)
 				objeto.publicacion = "" // ObjectId de publicacion
 				objeto.fecha = ('0'+Math.floor(Math.random()*(30-1)+1)).slice(-2)+"-"+('0'+Math.floor(Math.random()*(12-1)+1)).slice(-2)+"-"+Math.floor(Math.random()*(2022-2018)+2018)
@@ -162,20 +157,6 @@ function generar_relaciones()
 	}
 	console.log("# Relaciones Usuario - Publicacion asignadas! Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 
-	// Relaciona Servicio con Categoria
-	init = Date.now()
-	servicios = db.servicios.find({})
-	categorias = db.categorias.aggregate({ $sample: { size: db.categorias.countDocuments() } })
-	while (servicios.hasNext())
-	{
-		if(!categorias.hasNext())
-		{
-			categorias = db.categorias.aggregate({ $sample: { size: db.categorias.countDocuments() } })
-		}
-		db.servicios.updateOne({_id:servicios.next()._id}, {$set:{categoria:categorias.next()._id}})
-	}
-	console.log("# Relaciones Servicio - Categoria asignadas! Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
-
 	// Relaciona Publicacion con Servicio
 	init = Date.now()
 	publicaciones = db.publicaciones.find({})
@@ -204,38 +185,6 @@ function generar_relaciones()
 	}
 	console.log("# Relaciones Resena - Usuario asignadas!")
 	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
-
-	// Relaciona historial con usuarios tipo 0 y 1
-	init = Date.now()
-	historial = db.historial.find()
-	cliente = db.usuarios.aggregate([{$match:{tipo_usuario:0}},{$sample:{size:db.usuarios.countDocuments()}}])
-	oferente = db.usuarios.aggregate([{$match:{tipo_usuario:1}},{$sample:{size:db.usuarios.countDocuments()}}])
-	while (historial.hasNext())
-	{
-		if(!cliente.hasNext())
-		{
-			cliente = db.usuarios.aggregate([{$match:{tipo_usuario:0}},{$sample:{size:db.usuarios.countDocuments()}}])
-		}
-
-		if(!oferente.hasNext())
-		{
-			oferente = db.usuarios.aggregate([{$match:{tipo_usuario:1}},{$sample:{size:db.usuarios.countDocuments()}}])
-		}
-		db.historial.updateOne({_id:historial.next()._id}, {$set:{oferente:oferente.next()._id, cliente:cliente.next()._id}})
-	}
-	console.log("# Relaciones Historial - Usuario asignadas!")
-	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
-
-	// Cantidad de servicios realizados por usuario tipo 1
-
-	usuarios = db.usuarios.find({tipo_usuario:1})
-	while(usuarios.hasNext())
-	{
-    usuario = usuarios.next()._id
-    cantidad = db.historial.countDocuments({"oferente":usuario})
-    db.usuarios.updateOne({_id:usuario}, {$set:{countServicios:cantidad}})
-	}
-
 }
 
 //db.dropDatabase()
