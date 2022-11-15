@@ -1,8 +1,8 @@
 // variables globales para la cantidad de documentos a crear
-var cantidad_usuarios = 1000000
+var cantidad_usuarios = 50000
 var cantidad_categorias = 15
-var cantidad_resenas = 2000000
-var cantidad_historial = 1200000
+var cantidad_resenas = 20000
+var cantidad_historial = 12000
 main() // recibe el nombre de la base de datos como parametro, si queda en blanco se crea con el nombre "ServiciosYa"
 
 function randomDate(start, end) {
@@ -161,8 +161,9 @@ function generar_relaciones()
 	usuarios = db.usuarios.find({tipo_usuario:1})
 	while (usuarios.hasNext())
 	{
-		db.publicacion.updateOne({_id:publicaciones.next()._id}, {$set:{usuario:usuarios.next()._id}})
+		db.publicaciones.updateOne({_id:publicaciones.next()._id}, {$set:{usuario:usuarios.next()._id}})
 	}
+	console.log("# Relacion publicacion - usuario")
 
 	// Relaciona Publicacion con Servicio
 
@@ -178,9 +179,9 @@ function generar_relaciones()
 		let random = Math.floor(Math.random()*(servicios.length-1)+1)
 		db.publicaciones.updateOne({_id:publicacion.next()._id}, {$set:{servicio:servicios[random]}})
 	}
+	console.log("# Relacion publicacion - servicio")
 
 	// Relaciona resenas con usuarios tipo 0 
-	init = Date.now()
 	resenas = db.resenas.find()
 	usuarios = db.usuarios.aggregate([{$match:{tipo_usuario:0}},{$sample:{size:db.usuarios.countDocuments()}}])
 	while (resenas.hasNext())
@@ -191,8 +192,20 @@ function generar_relaciones()
 		}
 		db.resenas.updateOne({_id:resenas.next()._id}, {$set:{cliente:usuarios.next()._id}})
 	}
-	console.log("# Relaciones Resena - Usuario asignadas!")
-	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
+	console.log("# Relacion resena - usuario")
+
+	// Relaciona publicacion con resenas
+	publicaciones = db.publicaciones.find()
+	resenas = db.resenas.find()
+	while (publicaciones.hasNext())
+	{
+		if(!resenas.hasNext())
+		{
+			resenas = db.resenas.find()
+		}
+		db.publicaciones.updateOne({_id:publicaciones.next()._id}, {$set:{resena:resenas.next()._id}})
+	}
+	console.log("# Relacion publicacion - resena")
 }
 
 //db.dropDatabase()
