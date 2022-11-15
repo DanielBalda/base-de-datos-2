@@ -1,8 +1,8 @@
 // variables globales para la cantidad de documentos a crear
-var cantidad_usuarios = 50000
+var cantidad_usuarios = 5000
 var cantidad_categorias = 15
-var cantidad_resenas = 20000
-var cantidad_historial = 12000
+var cantidad_resenas = 2000
+var cantidad_historial = 1200
 main() // recibe el nombre de la base de datos como parametro, si queda en blanco se crea con el nombre "ServiciosYa"
 
 function randomDate(start, end) {
@@ -83,7 +83,6 @@ function agregar_documentos(coleccion)
 				telefonoJson.celular_1 = Math.floor(Math.random()*(2709999999-2500000000)+2500000000)
 				telefonoJson.celular_2 = Math.floor(Math.random()*(2709999999-2500000000)+2500000000)
 				objeto.telefono = telefonoJson
-				objeto.historial = "" // ObjetoId de historial
 				data.push(objeto)
 			}
 		break
@@ -139,7 +138,7 @@ function agregar_documentos(coleccion)
 				objeto.cliente = "" // ObjectId de usuario (tipo_usuario = 0)
 				objeto.publicacion = "" // ObjectId de publicacion
 				objeto.fecha = randomDate(new Date(2019, 0, 1), new Date(2022, 0, 1))
-				objeto.costo_total = Math.floor(Math.random()*(30000-8000)+8000)
+				objeto.costo_reparacion = Math.floor(Math.random()*(30000-8000)+8000)
 				data.push(objeto)
 			}
 		break
@@ -198,15 +197,41 @@ function generar_relaciones()
 	// Relaciona resenas con publicaciones
 	resenas = db.resenas.find()
 	publicaciones = db.publicaciones.find()
-	while (publicaciones.hasNext())
+	count = 3
+	repeat = ""
+	repeat = publicaciones.next()._id
+	while (resenas.hasNext())
 	{
 		if(!publicaciones.hasNext())
 		{
 			publicaciones = db.publicaciones.find()
 		}
-		db.resenas.updateOne({_id:resenas.next()._id}, {$set:{publicacion:publicaciones.next()._id}})
+		if(count == 0)
+		{
+			repeat = publicaciones.next()._id
+			count = 3
+		}
+		db.resenas.updateOne({_id:resenas.next()._id}, {$set:{publicacion:repeat}})
+		count--
 	}
 	console.log("# Relacion resena - publicacion")
+
+	// relacion usuario_tipo 0 con historial
+	usuarios = db.usuarios.find({},{tipo_usuario:0})
+	public = db.publicaciones.find()
+	hist = db.historial.find()
+	while(hist.hasNext())
+	{
+		if(!usuarios.hasNext())
+		{
+			usuarios = db.usuarios.find({},{tipo_usuario:0})
+		}
+		if(!public.hasNext())
+		{
+			public = db.publicaciones.find()
+		}
+		db.historial.updateOne({_id:hist.next()._id}, {$set:{cliente:usuarios.next()._id, publicacion:public.next()._id}})
+	}
 }
 
 //db.dropDatabase()
