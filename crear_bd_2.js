@@ -125,7 +125,7 @@ function agregar_documentos(coleccion)
 				objeto.comentario = "Esto es un comentario de prueba... Muy buena atencion, todo ok. Cobro lo que corresponde"
 				objeto.fecha = randomDate(new Date(2019, 0, 1), new Date(2022, 0, 1))
 				objeto.cliente = "" // ObjectId de usuario (tipo_usuario = 0)
-				objeto.pusblicacion = "" // ObjectId de publicacion
+				objeto.publicacion = "" // ObjectId de publicacion
 				data.push(objeto)
 			}
 		break
@@ -203,7 +203,7 @@ function generar_relaciones()
 		{
 			publicaciones = db.publicaciones.find()
 		}
-		db.resenas.updateOne({_id:resenas.next()._id}, {$set:{resena:publicaciones.next()._id}})
+		db.resenas.updateOne({_id:resenas.next()._id}, {$set:{publicacion:publicaciones.next()._id}})
 	}
 	console.log("# Relacion resena - publicacion")
 }
