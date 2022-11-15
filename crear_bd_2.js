@@ -60,6 +60,7 @@ function agregar_documentos(coleccion)
 					direccionJson.numero = Math.floor(Math.random()*(9000-100)+100)
 					direccionJson.codigo_postal = Math.floor(Math.random()*(6000-5000)+5000)
 					direccionJson.localidad = "localidad_"+Math.floor(Math.random()*(100-0)+0)
+					direccionJson.provincia = "provincia_"+Math.floor(Math.random()*(100-0)+0)
 					if(dir > 1)
 					{
 						direccionJson.edificio = Math.floor(Math.random()*(4-1)+1)
