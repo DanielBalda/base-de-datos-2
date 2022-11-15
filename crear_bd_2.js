@@ -1,17 +1,18 @@
 // variables globales para la cantidad de documentos a crear
-var cantidad_usuarios = 1000
-var cantidad_servicios = 60
-var cantidad_categorias = 10
-var cantidad_resenas = 1000
-var cantidad_historial = 1000
+var cantidad_usuarios = 1000000
+var cantidad_categorias = 15
+var cantidad_resenas = 2000000
+var cantidad_historial = 1200000
 main() // recibe el nombre de la base de datos como parametro, si queda en blanco se crea con el nombre "ServiciosYa"
 
 function randomDate(start, end) {
-	var date = new Date(+start + Math.random() * (end - start));
-	var day = date.getDate();
-	var month = date.getMonth() + 1;
-	var year = date.getFullYear();
-	return year + "-" + month + "-" + day;
+	var date = new Date(+start + Math.random() * (end - start))
+	var day = date.getDate()
+	var month = date.getMonth() + 1
+	var year = date.getFullYear()
+	month = month < 10 ? '0' + month : month
+	day = day < 10 ? '0' + day : day
+	return year + "-" + month + "-" + day
 }
 
 function main(nombre = "ServiciosYa")
@@ -51,7 +52,6 @@ function agregar_documentos(coleccion)
 				objeto.contrasena = "ab58s1968w1fas81gw"+index
 				objeto.avatar = "imagen/"+index
 				objeto.tipo_usuario = tipo
-				objeto.publicacion = "" // ObjetoId de publicacion
 				direcciones = []
 				for(let dir=0;dir<3;dir++)
 				{
@@ -75,7 +75,7 @@ function agregar_documentos(coleccion)
 					direcciones.push(direccionJson)
 				}
 				objeto.direccion = direcciones
-				objeto.dni = Math.floor(Math.random()*(99999999-10000000)+10000000)
+				objeto.dni = parseInt(Math.floor(Math.random()*(99999999-10000000)+10000000)+""+index)
 				objeto.fecha_nacimiento = randomDate(new Date(1990, 0, 1), new Date(2010, 0, 1))
 				let telefonoJson = new Object()
 				telefonoJson.casa = Math.floor(Math.random()*(4999999-4000000)+4000000)
@@ -111,6 +111,7 @@ function agregar_documentos(coleccion)
 				objeto.descripcion = "Descripcion sobre el servicio brindado por el usuario, con detalles puntuales."
 				objeto.fecha_publicacion = randomDate(new Date(2019, 0, 1), new Date(2022, 0, 1))
 				objeto.costo_visita = Math.floor(Math.random()*(1000-200)+200)
+				objeto.usuario = "" // ObjetoId de usuarios
 				objeto.resena = "" // ObjectId de reseña
 				objeto.servicio = "" // ObjectId de servicio
 				data.push(objeto)
@@ -155,12 +156,12 @@ function agregar_documentos(coleccion)
 function generar_relaciones()
 {
 
-	// Relaciona usuarios tipo 1 con publicacion
-	usuarios = db.usuarios.find({tipo_usuario:1})
+	// Relaciona publicacion con usuarios tipo 1
 	publicaciones = db.publicaciones.find()
+	usuarios = db.usuarios.find({tipo_usuario:1})
 	while (usuarios.hasNext())
 	{
-		db.usuarios.updateOne({_id:usuarios.next()._id}, {$set:{publicacion:publicaciones.next()._id}})
+		db.publicacion.updateOne({_id:publicaciones.next()._id}, {$set:{usuario:usuarios.next()._id}})
 	}
 
 	// Relaciona Publicacion con Servicio
@@ -177,7 +178,7 @@ function generar_relaciones()
 		let random = Math.floor(Math.random()*(servicios.length-1)+1)
 		db.publicaciones.updateOne({_id:publicacion.next()._id}, {$set:{servicio:servicios[random]}})
 	}
-	
+
 	// Relaciona resenas con usuarios tipo 0 
 	init = Date.now()
 	resenas = db.resenas.find()
@@ -194,4 +195,4 @@ function generar_relaciones()
 	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 }
 
-db.dropDatabase()
+//db.dropDatabase()
