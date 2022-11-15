@@ -6,6 +6,14 @@ var cantidad_resenas = 1000
 var cantidad_historial = 1000
 main() // recibe el nombre de la base de datos como parametro, si queda en blanco se crea con el nombre "ServiciosYa"
 
+function randomDate(start, end) {
+	var date = new Date(+start + Math.random() * (end - start));
+	var day = date.getDate();
+	var month = date.getMonth() + 1;
+	var year = date.getFullYear();
+	return year + "-" + month + "-" + day;
+}
+
 function main(nombre = "ServiciosYa")
 {
 	let init = Date.now()
@@ -68,7 +76,7 @@ function agregar_documentos(coleccion)
 				}
 				objeto.direccion = direcciones
 				objeto.dni = Math.floor(Math.random()*(99999999-10000000)+10000000)
-				objeto.fecha_nacimiento = ('0'+Math.floor(Math.random()*(30-1)+1)).slice(-2)+"-"+('0'+Math.floor(Math.random()*(12-1)+1)).slice(-2)+"-"+Math.floor(Math.random()*(2005-1950)+1950)
+				objeto.fecha_nacimiento = randomDate(new Date(1990, 0, 1), new Date(2010, 0, 1))
 				let telefonoJson = new Object()
 				telefonoJson.casa = Math.floor(Math.random()*(4999999-4000000)+4000000)
 				telefonoJson.celular_1 = Math.floor(Math.random()*(2709999999-2500000000)+2500000000)
@@ -101,7 +109,7 @@ function agregar_documentos(coleccion)
 			{
 				objeto = new Object()
 				objeto.descripcion = "Descripcion sobre el servicio brindado por el usuario, con detalles puntuales."
-				objeto.fecha_publicacion = ('0'+Math.floor(Math.random()*(30-1)+1)).slice(-2)+"-"+('0'+Math.floor(Math.random()*(12-1)+1)).slice(-2)+"-"+Math.floor(Math.random()*(2022-2018)+2018)
+				objeto.fecha_publicacion = randomDate(new Date(2019, 0, 1), new Date(2022, 0, 1))
 				objeto.costo_visita = Math.floor(Math.random()*(1000-200)+200)
 				objeto.resena = "" // ObjectId de reseña
 				objeto.servicio = "" // ObjectId de servicio
@@ -115,7 +123,7 @@ function agregar_documentos(coleccion)
 				objeto = new Object()
 				objeto.valoracion = Math.floor(Math.random()*(5-1)+1)
 				objeto.comentario = "Esto es un comentario de prueba... Muy buena atencion, todo ok. Cobro lo que corresponde"
-				objeto.fecha = ('0'+Math.floor(Math.random()*(30-1)+1)).slice(-2)+"-"+('0'+Math.floor(Math.random()*(12-1)+1)).slice(-2)+"-"+Math.floor(Math.random()*(2022-2018)+2018)
+				objeto.fecha = randomDate(new Date(2019, 0, 1), new Date(2022, 0, 1))
 				objeto.cliente = "" // ObjectId de usuario (tipo_usuario = 0)
 				data.push(objeto)
 			}
@@ -128,7 +136,7 @@ function agregar_documentos(coleccion)
 				objeto.estado = Math.floor(Math.random()*(3-0)+0) // 0 - Cancelado, 1 - En proceso, 2 - Completado
 				objeto.cliente = "" // ObjectId de usuario (tipo_usuario = 0)
 				objeto.publicacion = "" // ObjectId de publicacion
-				objeto.fecha = ('0'+Math.floor(Math.random()*(30-1)+1)).slice(-2)+"-"+('0'+Math.floor(Math.random()*(12-1)+1)).slice(-2)+"-"+Math.floor(Math.random()*(2022-2018)+2018)
+				objeto.fecha = randomDate(new Date(2019, 0, 1), new Date(2022, 0, 1))
 				objeto.costo_total = Math.floor(Math.random()*(30000-8000)+8000)
 				data.push(objeto)
 			}
@@ -147,30 +155,29 @@ function agregar_documentos(coleccion)
 function generar_relaciones()
 {
 
-	// Relaciona usuarios tipo 1 con publicacion 
-	init = Date.now()
+	// Relaciona usuarios tipo 1 con publicacion
 	usuarios = db.usuarios.find({tipo_usuario:1})
 	publicaciones = db.publicaciones.find()
 	while (usuarios.hasNext())
 	{
 		db.usuarios.updateOne({_id:usuarios.next()._id}, {$set:{publicacion:publicaciones.next()._id}})
 	}
-	console.log("# Relaciones Usuario - Publicacion asignadas! Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 
 	// Relaciona Publicacion con Servicio
-	init = Date.now()
-	publicaciones = db.publicaciones.find({})
-	servicios = db.servicios.aggregate({ $sample: { size: db.servicios.countDocuments() } })
-	while (publicaciones.hasNext())
-	{
-		if(!servicios.hasNext())
-		{
-			servicios = db.servicios.aggregate({ $sample: { size: db.servicios.countDocuments() } })
-		}
-		db.publicaciones.updateOne({_id:publicaciones.next()._id}, {$set:{servicio:servicios.next()._id}})
-	}
-	console.log("# Relaciones Publicacion - Servicio asignadas! Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 
+	let categorias = db.categorias.find({}, {servicios:1})
+	let publicacion = db.publicaciones.find()
+	while(publicacion.hasNext())
+	{
+		if(!categorias.hasNext())
+		{
+			categorias = db.categorias.find({}, {servicios:1})
+		}
+		let servicios = categorias.next().servicios
+		let random = Math.floor(Math.random()*(servicios.length-1)+1)
+		db.publicaciones.updateOne({_id:publicacion.next()._id}, {$set:{servicio:servicios[random]}})
+	}
+	
 	// Relaciona resenas con usuarios tipo 0 
 	init = Date.now()
 	resenas = db.resenas.find()
@@ -187,4 +194,4 @@ function generar_relaciones()
 	console.log("Tiempo: "+Math.floor((Date.now() - init)/1000)+" segundos")
 }
 
-//db.dropDatabase()
+db.dropDatabase()
